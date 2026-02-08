@@ -43,6 +43,9 @@ struct FamilyManagementView: View {
                         .onDelete { offsets in
                             deleteMembers(from: family, at: offsets)
                         }
+                        .onMove { offsets, destination in
+                            moveMembers(in: family, from: offsets, to: destination)
+                        }
                         
                         Button(action: {
                             selectedFamily = family
@@ -91,6 +94,12 @@ struct FamilyManagementView: View {
                 let member = family.members[index]
                 modelContext.delete(member)
             }
+        }
+    }
+    
+    private func moveMembers(in family: Family, from offsets: IndexSet, to destination: Int) {
+        withAnimation {
+            family.members.move(fromOffsets: offsets, toOffset: destination)
         }
     }
 }
