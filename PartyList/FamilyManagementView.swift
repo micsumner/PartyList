@@ -11,6 +11,7 @@ import SwiftData
 struct FamilyManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Family.name) private var families: [Family]
+    @State private var isEditing = false
     @State private var showingAddFamily = false
     @State private var selectedFamily: Family?
     
@@ -19,6 +20,17 @@ struct FamilyManagementView: View {
             List {
                 ForEach(families) { family in
                     Section(header: Text(family.name)) {
+                        if isEditing {
+                            Button(role: .destructive, action: {
+                                deleteFamily(family)
+                            }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Delete \(family.name)")
+                                }
+                            }
+                        }
+                        
                         ForEach(family.members) { member in
                             HStack {
                                 Text(member.name)
@@ -39,12 +51,16 @@ struct FamilyManagementView: View {
                         }
                     }
                 }
-                .onDelete(perform: deleteFamilies)
             }
             .navigationTitle("Families")
+            .environment(\.editMode, .constant(isEditing ? .active : .inactive))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                    Button(isEditing ? "Done" : "Edit") {
+                        withAnimation {
+                            isEditing.toggle()
+                        }
+                    }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -63,11 +79,9 @@ struct FamilyManagementView: View {
         }
     }
     
-    private func deleteFamilies(offsets: IndexSet) {
+    private func deleteFamily(_ family: Family) {
         withAnimation {
-            for index in offsets {
-                modelContext.delete(families[index])
-            }
+            modelContext.delete(family)
         }
     }
     
