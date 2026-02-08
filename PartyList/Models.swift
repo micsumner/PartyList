@@ -26,6 +26,10 @@ final class FamilyMember {
     var isAttending: Bool
     var family: Family?
     
+    var typeLabel: String {
+        isAdult ? "Adult" : "Child"
+    }
+    
     init(name: String, isAdult: Bool, family: Family? = nil) {
         self.name = name
         self.isAdult = isAdult

@@ -12,7 +12,6 @@ struct FamilyManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Family.name) private var families: [Family]
     @State private var showingAddFamily = false
-    @State private var newFamilyName = ""
     @State private var selectedFamily: Family?
     
     var body: some View {
@@ -24,7 +23,7 @@ struct FamilyManagementView: View {
                             HStack {
                                 Text(member.name)
                                 Spacer()
-                                Text(member.isAdult ? "Adult" : "Child")
+                                Text(member.typeLabel)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -59,7 +58,7 @@ struct FamilyManagementView: View {
                 AddFamilySheet(isPresented: $showingAddFamily)
             }
             .sheet(item: $selectedFamily) { family in
-                AddMemberSheet(family: family, isPresented: .constant(true))
+                AddMemberSheet(family: family)
             }
         }
     }
@@ -121,7 +120,6 @@ struct AddMemberSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     let family: Family
-    @Binding var isPresented: Bool
     @State private var memberName = ""
     @State private var isAdult = true
     
@@ -158,7 +156,6 @@ struct AddMemberSheet: View {
     private func addMember() {
         let member = FamilyMember(name: memberName, isAdult: isAdult, family: family)
         modelContext.insert(member)
-        family.members.append(member)
     }
 }
 

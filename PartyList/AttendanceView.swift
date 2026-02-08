@@ -12,6 +12,10 @@ struct AttendanceView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Family.name) private var families: [Family]
     
+    // Layout constants
+    private let summarySpacing: CGFloat = 30
+    private let summaryVerticalPadding: CGFloat = 8
+    
     // Calculate attendance counts
     private var attendingAdults: Int {
         families.flatMap { $0.members }
@@ -52,12 +56,13 @@ struct AttendanceView: View {
                                             Image(systemName: member.isAttending ? "checkmark.circle.fill" : "circle")
                                                 .foregroundStyle(member.isAttending ? .orange : .gray)
                                                 .font(.title3)
+                                                .accessibilityLabel(member.isAttending ? "Attending" : "Not attending")
                                             
                                             Text(member.name)
                                             
                                             Spacer()
                                             
-                                            Text(member.isAdult ? "Adult" : "Child")
+                                            Text(member.typeLabel)
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -65,6 +70,10 @@ struct AttendanceView: View {
                                         .onTapGesture {
                                             toggleAttendance(for: member)
                                         }
+                                        .accessibilityElement(children: .combine)
+                                        .accessibilityLabel("\(member.name), \(member.typeLabel)")
+                                        .accessibilityValue(member.isAttending ? "Attending" : "Not attending")
+                                        .accessibilityHint("Double tap to toggle attendance")
                                     }
                                 }
                             } header: {
@@ -74,22 +83,22 @@ struct AttendanceView: View {
                                     Button(action: {
                                         toggleFamilySelection(family)
                                     }) {
-                                        let allSelected = !family.members.isEmpty && family.members.allSatisfy { $0.isAttending }
-                                        Text(allSelected ? "Select None" : "Select All")
+                                        Text(isFamilyFullySelected(family) ? "Select None" : "Select All")
                                             .font(.caption)
                                             .textCase(.none)
                                     }
                                     .disabled(family.members.isEmpty)
+                                    .accessibilityLabel(isFamilyFullySelected(family) ? "Deselect all members of \(family.name)" : "Select all members of \(family.name)")
                                 }
                             }
                         }
                     }
                     
                     // Attendance summary at the bottom
-                    VStack(spacing: 8) {
+                    VStack(spacing: summaryVerticalPadding) {
                         Divider()
                         
-                        HStack(spacing: 30) {
+                        HStack(spacing: summarySpacing) {
                             VStack {
                                 Text("\(attendingAdults)")
                                     .font(.title)
@@ -117,7 +126,7 @@ struct AttendanceView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 8)
+                        .padding(.vertical, summaryVerticalPadding)
                     }
                     .background(.regularMaterial)
                 }
@@ -129,6 +138,8 @@ struct AttendanceView: View {
                         resetAttendance()
                     }
                     .disabled(totalAttending == 0)
+                    .accessibilityLabel("Reset all attendance")
+                    .accessibilityHint("Clears attendance for all family members")
                 }
             }
         }
@@ -147,10 +158,14 @@ struct AttendanceView: View {
     }
     
     private func toggleFamilySelection(_ family: Family) {
-        let allSelected = family.members.allSatisfy { $0.isAttending }
+        let allSelected = isFamilyFullySelected(family)
         for member in family.members {
             member.isAttending = !allSelected
         }
+    }
+    
+    private func isFamilyFullySelected(_ family: Family) -> Bool {
+        !family.members.isEmpty && family.members.allSatisfy { $0.isAttending }
     }
 }
 
