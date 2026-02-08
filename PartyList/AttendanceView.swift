@@ -95,40 +95,13 @@ struct AttendanceView: View {
                     }
                     
                     // Attendance summary at the bottom
-                    VStack(spacing: summaryVerticalPadding) {
-                        Divider()
-                        
-                        HStack(spacing: summarySpacing) {
-                            VStack {
-                                Text("\(attendingAdults)")
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                Text("Adults")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            VStack {
-                                Text("\(attendingChildren)")
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                Text("Children")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            VStack {
-                                Text("\(totalAttending)")
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                Text("Total")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, summaryVerticalPadding)
-                    }
-                    .background(.regularMaterial)
+                    AttendanceSummaryView(
+                        adults: attendingAdults,
+                        children: attendingChildren,
+                        total: totalAttending,
+                        spacing: summarySpacing,
+                        verticalPadding: summaryVerticalPadding
+                    )
                 }
             }
             .navigationTitle("Attendance")
@@ -166,6 +139,44 @@ struct AttendanceView: View {
     
     private func isFamilyFullySelected(_ family: Family) -> Bool {
         !family.members.isEmpty && family.members.allSatisfy { $0.isAttending }
+    }
+}
+
+struct AttendanceSummaryView: View {
+    let adults: Int
+    let children: Int
+    let total: Int
+    let spacing: CGFloat
+    let verticalPadding: CGFloat
+    
+    var body: some View {
+        VStack(spacing: verticalPadding) {
+            Divider()
+            
+            HStack(spacing: spacing) {
+                CountBadge(count: adults, label: "Adults")
+                CountBadge(count: children, label: "Children")
+                CountBadge(count: total, label: "Total")
+            }
+            .padding(.vertical, verticalPadding)
+        }
+        .background(.regularMaterial)
+    }
+}
+
+struct CountBadge: View {
+    let count: Int
+    let label: String
+    
+    var body: some View {
+        VStack {
+            Text("\(count)")
+                .font(.title)
+                .fontWeight(.bold)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 

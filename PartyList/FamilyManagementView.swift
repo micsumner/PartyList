@@ -17,41 +17,48 @@ struct FamilyManagementView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(families) { family in
-                    Section(header: Text(family.name)) {
-                        if isEditing {
-                            Button(role: .destructive, action: {
-                                deleteFamily(family)
-                            }) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("Delete \(family.name)")
+            Group {
+                if families.isEmpty {
+                    ContentUnavailableView(
+                        "No Families Yet",
+                        systemImage: "person.3.fill",
+                        description: Text("Tap the + button to add your first family")
+                    )
+                } else {
+                    List {
+                        ForEach(families) { family in
+                        Section(header: Text(family.name)) {
+                            if isEditing {
+                                Button(role: .destructive, action: {
+                                    deleteFamily(family)
+                                }) {
+                                    Label("Delete Family", systemImage: "trash")
                                 }
                             }
-                        }
-                        
-                        ForEach(family.members) { member in
-                            HStack {
-                                Text(member.name)
-                                Spacer()
-                                Text(member.typeLabel)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            
+                            ForEach(family.members) { member in
+                                HStack {
+                                    Text(member.name)
+                                    Spacer()
+                                    Text(member.typeLabel)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .onDelete { offsets in
+                                deleteMembers(from: family, at: offsets)
+                            }
+                            .onMove { offsets, destination in
+                                moveMembers(in: family, from: offsets, to: destination)
+                            }
+                            
+                            Button(action: {
+                                selectedFamily = family
+                            }) {
+                                Label("Add Member", systemImage: "person.badge.plus")
                             }
                         }
-                        .onDelete { offsets in
-                            deleteMembers(from: family, at: offsets)
-                        }
-                        .onMove { offsets, destination in
-                            moveMembers(in: family, from: offsets, to: destination)
-                        }
-                        
-                        Button(action: {
-                            selectedFamily = family
-                        }) {
-                            Label("Add Member", systemImage: "person.badge.plus")
-                        }
+                    }
                     }
                 }
             }
@@ -74,7 +81,7 @@ struct FamilyManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddFamily) {
-                AddFamilySheet(isPresented: $showingAddFamily)
+                AddFamilySheet()
             }
             .sheet(item: $selectedFamily) { family in
                 AddMemberSheet(family: family)
@@ -106,26 +113,31 @@ struct FamilyManagementView: View {
 
 struct AddFamilySheet: View {
     @Environment(\.modelContext) private var modelContext
-    @Binding var isPresented: Bool
+    @Environment(\.dismiss) private var dismiss
     @State private var familyName = ""
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Family Name", text: $familyName)
+                    .focused($isFocused)
             }
             .navigationTitle("Add Family")
+            .onAppear {
+                isFocused = true
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        isPresented = false
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         addFamily()
-                        isPresented = false
+                        dismiss()
                     }
                     .disabled(familyName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
@@ -134,7 +146,8 @@ struct AddFamilySheet: View {
     }
     
     private func addFamily() {
-        let family = Family(name: familyName)
+        let trimmedName = familyName.trimmingCharacters(in: .whitespaces)
+        let family = Family(name: trimmedName)
         modelContext.insert(family)
     }
 }
@@ -145,11 +158,13 @@ struct AddMemberSheet: View {
     let family: Family
     @State private var memberName = ""
     @State private var isAdult = true
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Member Name", text: $memberName)
+                    .focused($isFocused)
                 
                 Picker("Type", selection: $isAdult) {
                     Text("Adult").tag(true)
@@ -157,7 +172,10 @@ struct AddMemberSheet: View {
                 }
                 .pickerStyle(.segmented)
             }
-            .navigationTitle("Add Member to \(family.name)")
+            .navigationTitle("Add Member")
+            .onAppear {
+                isFocused = true
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -177,7 +195,8 @@ struct AddMemberSheet: View {
     }
     
     private func addMember() {
-        let member = FamilyMember(name: memberName, isAdult: isAdult, family: family)
+        let trimmedName = memberName.trimmingCharacters(in: .whitespaces)
+        let member = FamilyMember(name: trimmedName, isAdult: isAdult, family: family)
         modelContext.insert(member)
     }
 }
