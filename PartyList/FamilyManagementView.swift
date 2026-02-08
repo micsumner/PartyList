@@ -36,7 +36,7 @@ struct FamilyManagementView: View {
                                 }
                             }
                             
-                            ForEach(family.members) { member in
+                            ForEach(family.sortedMembers) { member in
                                 HStack {
                                     Text(member.name)
                                     Spacer()
@@ -106,7 +106,13 @@ struct FamilyManagementView: View {
     
     private func moveMembers(in family: Family, from offsets: IndexSet, to destination: Int) {
         withAnimation {
-            family.members.move(fromOffsets: offsets, toOffset: destination)
+            var sortedMembers = family.sortedMembers
+            sortedMembers.move(fromOffsets: offsets, toOffset: destination)
+            
+            // Update order for all members
+            for (index, member) in sortedMembers.enumerated() {
+                member.order = index
+            }
         }
     }
 }
@@ -196,7 +202,8 @@ struct AddMemberSheet: View {
     
     private func addMember() {
         let trimmedName = memberName.trimmingCharacters(in: .whitespaces)
-        let member = FamilyMember(name: trimmedName, isAdult: isAdult, family: family)
+        let order = family.members.map { $0.order }.max() ?? -1
+        let member = FamilyMember(name: trimmedName, isAdult: isAdult, order: order + 1, family: family)
         modelContext.insert(member)
     }
 }

@@ -51,7 +51,7 @@ struct AttendanceView: View {
                                         .foregroundStyle(.secondary)
                                         .font(.callout)
                                 } else {
-                                    ForEach(family.members) { member in
+                                    ForEach(family.sortedMembers) { member in
                                         HStack {
                                             Image(systemName: member.isAttending ? "checkmark.circle.fill" : "circle")
                                                 .foregroundStyle(member.isAttending ? .orange : .gray)
